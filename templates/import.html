@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Import CSV{% endblock %}
+{% block page_title %}Import Shipments via CSV{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white py-3 fw-semibold">Upload File</div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label class="form-label">CSV File</label>
+            <input type="file" name="file" class="form-control" accept=".csv" required />
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-upload me-1"></i> Import
+          </button>
+          <a href="{{ url_for('static', filename='sample_shipments.csv') }}"
+             class="btn btn-outline-secondary ms-2" download>
+            <i class="bi bi-download me-1"></i> Download Sample CSV
+          </a>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 fw-semibold">Required CSV Format</div>
+      <div class="card-body">
+        <p class="small text-muted mb-2">Your CSV must have these columns (header row required):</p>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered mb-3">
+            <thead class="table-light">
+              <tr><th>Column</th><th>Example</th><th>Notes</th></tr>
+            </thead>
+            <tbody class="small">
+              <tr><td><code>origin_code</code></td><td>CHI</td><td>Hub code (must exist)</td></tr>
+              <tr><td><code>destination_code</code></td><td>LAX</td><td>Hub code (must exist)</td></tr>
+              <tr><td><code>cargo_type</code></td><td>Electronics</td><td>Free text</td></tr>
+              <tr><td><code>weight_lbs</code></td><td>5000</td><td>Numeric</td></tr>
+              <tr><td><code>deadline</code></td><td>2026-06-30</td><td>YYYY-MM-DD</td></tr>
+              <tr><td><code>total_pay</code></td><td>4500.00</td><td>Dollar amount</td></tr>
+              <tr><td><code>notes</code></td><td>Fragile</td><td>Optional</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="alert alert-info py-2 small mb-0">
+          <i class="bi bi-info-circle me-1"></i>
+          Hub codes are case-insensitive. Use <strong>CHI, ATL, DAL, LAX, NYC</strong> etc.
+          View all codes on the <a href="{{ url_for('hubs') }}">Hubs page</a>.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

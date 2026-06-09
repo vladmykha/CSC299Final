@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block header_actions %}
+  <a href="{{ url_for('new_shipment') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> New Shipment
+  </a>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card border-0 shadow-sm">
+      <div class="card-body">
+        <p class="kpi-label">Total Shipments</p>
+        <h2 class="kpi-value">{{ stats.total }}</h2>
+        <span class="kpi-icon text-primary"><i class="bi bi-box-seam"></i></span>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card border-0 shadow-sm">
+      <div class="card-body">
+        <p class="kpi-label">Pending</p>
+        <h2 class="kpi-value text-warning">{{ stats.pending }}</h2>
+        <span class="kpi-icon text-warning"><i class="bi bi-clock-history"></i></span>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card border-0 shadow-sm">
+      <div class="card-body">
+        <p class="kpi-label">In Transit</p>
+        <h2 class="kpi-value text-info">{{ stats.in_transit }}</h2>
+        <span class="kpi-icon text-info"><i class="bi bi-truck"></i></span>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card border-0 shadow-sm">
+      <div class="card-body">
+        <p class="kpi-label">Delivered</p>
+        <h2 class="kpi-value text-success">{{ stats.delivered }}</h2>
+        <span class="kpi-icon text-success"><i class="bi bi-check-circle"></i></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Delayed Shipments -->
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white d-flex align-items-center gap-2 py-3">
+        <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+        <strong>Delayed Shipments</strong>
+        <span class="badge bg-danger ms-auto">{{ delayed|length }}</span>
+      </div>
+      <div class="card-body p-0">
+        {% if delayed %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th><th>Route</th><th>Deadline</th><th>Status</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in delayed %}
+              <tr>
+                <td class="text-muted">#{{ s.id }}</td>
+                <td>{{ s.origin_city }} → {{ s.dest_city }}</td>
+                <td class="text-danger fw-semibold">{{ s.deadline }}</td>
+                <td><span class="badge status-badge status-{{ s['status'].replace('-','') }}">{{ s['status'] }}</span></td>
+                <td><a href="{{ url_for('shipment_route', id=s.id) }}" class="btn btn-sm btn-outline-secondary py-0">View</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-check-circle-fill text-success fs-2 d-block mb-2"></i>
+          No delayed shipments
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Shipments -->
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white d-flex align-items-center py-3">
+        <strong>Recent Shipments</strong>
+        <a href="{{ url_for('shipments') }}" class="ms-auto small text-decoration-none">View all →</a>
+      </div>
+      <div class="card-body p-0">
+        {% if recent %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr><th>#</th><th>Route</th><th>Cargo</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+              {% for s in recent %}
+              <tr>
+                <td class="text-muted">#{{ s.id }}</td>
+                <td>{{ s.origin_city }} → {{ s.dest_city }}</td>
+                <td>{{ s.cargo_type }}</td>
+                <td><span class="badge status-badge status-{{ s['status'].replace('-','') }}">{{ s['status'] }}</span></td>
+                <td><a href="{{ url_for('shipment_route', id=s.id) }}" class="btn btn-sm btn-outline-secondary py-0">View</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+          No shipments yet.
+          <a href="{{ url_for('new_shipment') }}">Add one →</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

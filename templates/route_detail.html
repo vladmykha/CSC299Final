@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}Route — Shipment #{{ shipment.id }}{% endblock %}
+{% block page_title %}Route Optimization — Shipment #{{ shipment.id }}{% endblock %}
+{% block header_actions %}
+  <a href="{{ url_for('edit_shipment', id=shipment.id) }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-pencil"></i> Edit
+  </a>
+  <a href="{{ url_for('shipments') }}" class="btn btn-sm btn-outline-secondary">
+    ← Back
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+
+  <!-- Shipment Details -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 fw-semibold">
+        <i class="bi bi-box-seam me-1"></i> Shipment Details
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-5 text-muted">Origin</dt>
+          <dd class="col-7">{{ shipment.origin_city }} <span class="badge bg-light text-dark border">{{ shipment.origin_code }}</span></dd>
+
+          <dt class="col-5 text-muted">Destination</dt>
+          <dd class="col-7">{{ shipment.dest_city }} <span class="badge bg-light text-dark border">{{ shipment.dest_code }}</span></dd>
+
+          <dt class="col-5 text-muted">Cargo</dt>
+          <dd class="col-7">{{ shipment.cargo_type }}</dd>
+
+          <dt class="col-5 text-muted">Weight</dt>
+          <dd class="col-7">{{ "%.0f"|format(shipment.weight_lbs) }} lbs</dd>
+
+          <dt class="col-5 text-muted">Total Pay</dt>
+          <dd class="col-7 fw-semibold">${{ "%.2f"|format(shipment.total_pay) }}</dd>
+
+          <dt class="col-5 text-muted">Deadline</dt>
+          <dd class="col-7">{{ shipment.deadline }}</dd>
+
+          <dt class="col-5 text-muted">Status</dt>
+          <dd class="col-7">
+            <span class="badge status-badge status-{{ shipment['status'].replace('-','') }}">{{ shipment['status'] }}</span>
+          </dd>
+
+          {% if shipment.notes %}
+          <dt class="col-5 text-muted">Notes</dt>
+          <dd class="col-7">{{ shipment.notes }}</dd>
+          {% endif %}
+        </dl>
+
+        <!-- Status update -->
+        <hr class="my-3" />
+        <p class="small fw-semibold mb-2">Update Status</p>
+        <form method="post" action="{{ url_for('update_status', id=shipment.id) }}" class="d-flex gap-2 flex-wrap">
+          {% for st in ['pending', 'in-transit', 'delivered'] %}
+          <button name="status" value="{{ st }}"
+                  class="btn btn-sm {{ 'btn-dark' if shipment['status'] == st else 'btn-outline-secondary' }}">
+            {{ st }}
+          </button>
+          {% endfor %}
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Route Result -->
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 d-flex align-items-center gap-2">
+        <i class="bi bi-signpost-2 me-1"></i>
+        <span class="fw-semibold">Optimized Route</span>
+        {% if route %}
+          {% if is_good %}
+          <span class="badge bg-success ms-auto fs-6 px-3">
+            <i class="bi bi-check-circle-fill me-1"></i> Good Route
+          </span>
+          {% else %}
+          <span class="badge bg-danger ms-auto fs-6 px-3">
+            <i class="bi bi-x-circle-fill me-1"></i> Below Threshold
+          </span>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <div class="card-body">
+        {% if route %}
+
+        <!-- Route Metrics -->
+        <div class="row g-3 mb-4">
+          <div class="col-4">
+            <div class="metric-box text-center p-3 rounded-3 bg-light">
+              <div class="metric-value">{{ route.distance }} mi</div>
+              <div class="metric-label">Total Distance</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="metric-box text-center p-3 rounded-3 bg-light">
+              <div class="metric-value">${{ rate_per_mile }}/mi</div>
+              <div class="metric-label">Rate per Mile</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="metric-box text-center p-3 rounded-3 {{ 'bg-success-subtle' if is_good else 'bg-danger-subtle' }}">
+              <div class="metric-value">{{ route.hops }} stop{{ 's' if route.hops != 1 }}</div>
+              <div class="metric-label">Intermediate Hubs</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Good route threshold note -->
+        <div class="alert {{ 'alert-success' if is_good else 'alert-warning' }} py-2 d-flex align-items-center gap-2">
+          <i class="bi {{ 'bi-check-circle-fill' if is_good else 'bi-exclamation-triangle-fill' }}"></i>
+          {% if is_good %}
+            Pay of <strong>${{ "%.2f"|format(shipment.total_pay) }}</strong> meets the 3.5× threshold
+            (minimum ${{ "%.2f"|format(3.5 * route.distance) }} for {{ route.distance }} mi).
+          {% else %}
+            Pay of <strong>${{ "%.2f"|format(shipment.total_pay) }}</strong> is below the 3.5× threshold
+            — minimum <strong>${{ "%.2f"|format(3.5 * route.distance) }}</strong> required for {{ route.distance }} mi.
+          {% endif %}
+        </div>
+
+        <!-- Route Path -->
+        <p class="fw-semibold mb-3">Route Path</p>
+        <div class="route-path d-flex flex-wrap align-items-center gap-1">
+          {% for hub in route.path_details %}
+          <div class="hub-stop {{ 'hub-origin' if loop.first else ('hub-dest' if loop.last else 'hub-mid') }}">
+            <div class="hub-code">{{ hub.code }}</div>
+            <div class="hub-city">{{ hub.city }}</div>
+          </div>
+          {% if not loop.last %}
+          <span class="route-arrow"><i class="bi bi-arrow-right"></i></span>
+          {% endif %}
+          {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-exclamation-circle fs-2 d-block mb-2"></i>
+          No route found between these hubs. Check that a connected path exists in
+          <a href="{{ url_for('hubs') }}">Hubs &amp; Routes</a>.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

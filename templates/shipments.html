@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Shipments{% endblock %}
+{% block page_title %}Shipments{% endblock %}
+{% block header_actions %}
+  <a href="{{ url_for('new_shipment') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> New Shipment
+  </a>
+{% endblock %}
+
+{% block content %}
+<!-- Filters & Search -->
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body py-2 d-flex flex-wrap align-items-center gap-2">
+    <form class="d-flex gap-2 me-auto" method="get">
+      <input type="hidden" name="status" value="{{ status_filter }}" />
+      <input type="search" name="q" class="form-control form-control-sm" placeholder="Search city or cargo…" value="{{ search }}" style="min-width:200px;" />
+      <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+      {% if search %}<a href="{{ url_for('shipments', status=status_filter) }}" class="btn btn-sm btn-link text-muted">Clear</a>{% endif %}
+    </form>
+    <div class="btn-group btn-group-sm">
+      <a href="{{ url_for('shipments', q=search) }}"
+         class="btn {{ 'btn-dark' if status_filter == 'all' else 'btn-outline-secondary' }}">All</a>
+      <a href="{{ url_for('shipments', status='pending', q=search) }}"
+         class="btn {{ 'btn-warning' if status_filter == 'pending' else 'btn-outline-secondary' }}">Pending</a>
+      <a href="{{ url_for('shipments', status='in-transit', q=search) }}"
+         class="btn {{ 'btn-info' if status_filter == 'in-transit' else 'btn-outline-secondary' }}">In Transit</a>
+      <a href="{{ url_for('shipments', status='delivered', q=search) }}"
+         class="btn {{ 'btn-success' if status_filter == 'delivered' else 'btn-outline-secondary' }}">Delivered</a>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    {% if shipments %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Origin</th>
+            <th>Destination</th>
+            <th>Cargo</th>
+            <th>Weight (lbs)</th>
+            <th>Total Pay</th>
+            <th>Deadline</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in shipments %}
+          <tr>
+            <td class="text-muted">#{{ s.id }}</td>
+            <td>{{ s.origin_city }} <span class="text-muted small">({{ s.origin_code }})</span></td>
+            <td>{{ s.dest_city }} <span class="text-muted small">({{ s.dest_code }})</span></td>
+            <td>{{ s.cargo_type }}</td>
+            <td>{{ "%.0f"|format(s.weight_lbs) }}</td>
+            <td class="fw-semibold">${{ "%.2f"|format(s.total_pay) }}</td>
+            <td>{{ s.deadline }}</td>
+            <td>
+              <span class="badge status-badge status-{{ s['status'].replace('-','') }}">{{ s['status'] }}</span>
+            </td>
+            <td>
+              <div class="d-flex gap-1">
+                <a href="{{ url_for('shipment_route', id=s.id) }}"
+                   class="btn btn-sm btn-outline-primary py-0" title="View Route">
+                  <i class="bi bi-signpost-2"></i>
+                </a>
+                <a href="{{ url_for('edit_shipment', id=s.id) }}"
+                   class="btn btn-sm btn-outline-secondary py-0" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <form method="post" action="{{ url_for('delete_shipment', id=s.id) }}"
+                      onsubmit="return confirm('Delete shipment #{{ s.id }}?')">
+                  <button class="btn btn-sm btn-outline-danger py-0" title="Delete">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+      No shipments found.
+      <a href="{{ url_for('new_shipment') }}">Add one →</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

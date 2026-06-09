@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Edit Shipment' if shipment else 'New Shipment' }}{% endblock %}
+{% block page_title %}{{ 'Edit Shipment #' + shipment.id|string if shipment else 'New Shipment' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <form method="post">
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Origin Hub</label>
+              <select name="origin_hub" class="form-select" required>
+                <option value="">Select origin…</option>
+                {% for h in hubs %}
+                <option value="{{ h.id }}"
+                  {{ 'selected' if shipment and shipment.origin_hub == h.id }}>
+                  {{ h.city }}, {{ h.state }} ({{ h.code }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Destination Hub</label>
+              <select name="destination_hub" class="form-select" required>
+                <option value="">Select destination…</option>
+                {% for h in hubs %}
+                <option value="{{ h.id }}"
+                  {{ 'selected' if shipment and shipment.destination_hub == h.id }}>
+                  {{ h.city }}, {{ h.state }} ({{ h.code }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Cargo Type</label>
+              <input type="text" name="cargo_type" class="form-control"
+                     placeholder="e.g. Electronics, Furniture…"
+                     value="{{ shipment.cargo_type if shipment else '' }}" required />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Weight (lbs)</label>
+              <input type="number" name="weight_lbs" class="form-control"
+                     step="0.01" min="1"
+                     value="{{ shipment.weight_lbs if shipment else '' }}" required />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Total Pay ($)</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" name="total_pay" class="form-control"
+                       step="0.01" min="0"
+                       value="{{ shipment.total_pay if shipment else '' }}" required />
+              </div>
+              <div class="form-text">Route is <strong class="text-success">good</strong> if pay ≥ 3.5× mileage.</div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Deadline</label>
+              <input type="date" name="deadline" class="form-control"
+                     value="{{ shipment.deadline if shipment else '' }}" required />
+            </div>
+
+            {% if shipment %}
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Status</label>
+              <select name="status" class="form-select">
+                {% for st in ['pending', 'in-transit', 'delivered'] %}
+                <option value="{{ st }}" {{ 'selected' if shipment.status == st }}>{{ st }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endif %}
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Notes <span class="text-muted fw-normal">(optional)</span></label>
+              <textarea name="notes" class="form-control" rows="2"
+                        placeholder="Any special handling instructions…">{{ shipment.notes if shipment else '' }}</textarea>
+            </div>
+
+            <div class="col-12 d-flex gap-2 pt-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg"></i>
+                {{ 'Update Shipment' if shipment else 'Create Shipment' }}
+              </button>
+              <a href="{{ url_for('shipments') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

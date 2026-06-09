@@ -1,0 +1,195 @@
+/* ── Layout ──────────────────────────────────────────────────────────── */
+body {
+  background: #f1f5f9;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+#wrapper {
+  min-height: 100vh;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────── */
+#sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: #0f172a;
+  min-height: 100vh;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #1e293b;
+}
+
+.brand-icon {
+  font-size: 1.5rem;
+  color: #3b82f6;
+}
+
+.brand-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: 0.02em;
+}
+
+#sidebar .nav-link {
+  color: #94a3b8;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 2px;
+  font-size: 0.9rem;
+  transition: background 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#sidebar .nav-link:hover {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+#sidebar .nav-link.active {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.sidebar-footer {
+  color: #475569;
+  border-top: 1px solid #1e293b;
+}
+
+/* ── Topbar ──────────────────────────────────────────────────────────── */
+.topbar {
+  height: 58px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar h5 {
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+/* ── KPI Cards ───────────────────────────────────────────────────────── */
+.kpi-card .card-body {
+  position: relative;
+  padding: 1.25rem;
+  overflow: hidden;
+}
+
+.kpi-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  margin: 0;
+  color: #0f172a;
+}
+
+.kpi-icon {
+  position: absolute;
+  right: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2.2rem;
+  opacity: 0.15;
+}
+
+/* ── Status Badges ───────────────────────────────────────────────────── */
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.3em 0.65em;
+  border-radius: 20px;
+}
+
+.status-pending    { background: #fef3c7; color: #92400e; }
+.status-intransit  { background: #dbeafe; color: #1e40af; }
+.status-delivered  { background: #d1fae5; color: #065f46; }
+
+/* ── Route Path ──────────────────────────────────────────────────────── */
+.route-path {
+  gap: 6px !important;
+}
+
+.hub-stop {
+  text-align: center;
+  padding: 8px 14px;
+  border-radius: 10px;
+  min-width: 80px;
+}
+
+.hub-origin { background: #dbeafe; border: 2px solid #3b82f6; }
+.hub-dest   { background: #d1fae5; border: 2px solid #10b981; }
+.hub-mid    { background: #f1f5f9; border: 2px solid #cbd5e1; }
+
+.hub-code {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.hub-city {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.route-arrow {
+  color: #94a3b8;
+  font-size: 1.1rem;
+}
+
+/* ── Metrics ─────────────────────────────────────────────────────────── */
+.metric-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────── */
+.table th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.table td {
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────── */
+.card-header {
+  font-size: 0.9rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* ── Misc ────────────────────────────────────────────────────────────── */
+a { color: #3b82f6; }
+.form-label { font-size: 0.85rem; color: #374151; }

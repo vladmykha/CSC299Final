@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+
+{% block content %}
+<!-- KPI Row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card border-0 shadow-sm">
+      <div class="card-body">
+        <p class="kpi-label">Total Shipments</p>
+        <h2 class="kpi-value">{{ total }}</h2>
+        <span class="kpi-icon text-primary"><i class="bi bi-box-seam"></i></span>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card border-0 shadow-sm">
+      <div class="card-body">
+        <p class="kpi-label">Avg Rate / Mile</p>
+        <h2 class="kpi-value">${{ avg_rate }}</h2>
+        <span class="kpi-icon text-info"><i class="bi bi-currency-dollar"></i></span>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card border-0 shadow-sm">
+      <div class="card-body">
+        <p class="kpi-label">Good Routes</p>
+        <h2 class="kpi-value text-success">{{ good_count }}</h2>
+        <span class="kpi-icon text-success"><i class="bi bi-check-circle"></i></span>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card border-0 shadow-sm">
+      <div class="card-body">
+        <p class="kpi-label">Delayed</p>
+        <h2 class="kpi-value text-danger">{{ delayed_count }}</h2>
+        <span class="kpi-icon text-danger"><i class="bi bi-exclamation-triangle"></i></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Status Donut -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white py-3 fw-semibold">Shipments by Status</div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="statusChart" style="max-height:240px;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Good vs Bad Routes -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white py-3 fw-semibold">Route Quality</div>
+      <div class="card-body d-flex flex-column align-items-center justify-content-center gap-3">
+        <canvas id="qualityChart" style="max-height:220px;"></canvas>
+        <p class="text-muted small mb-0 text-center">
+          A <strong>good route</strong> pays at least $3.50 per mile.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Routes -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white py-3 fw-semibold">Top Routes by Volume</div>
+      <div class="card-body p-0">
+        {% if top_routes %}
+        <ul class="list-group list-group-flush">
+          {% for r in top_routes %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span class="small">{{ r.route }}</span>
+            <span class="badge bg-primary rounded-pill">{{ r.cnt }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="text-center py-4 text-muted">No data yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const statusCounts = {{ status_counts | tojson }};
+const statusLabels = Object.keys(statusCounts);
+const statusValues = Object.values(statusCounts);
+const statusColors = { pending: '#f59e0b', 'in-transit': '#3b82f6', delivered: '#10b981' };
+
+new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: statusLabels,
+    datasets: [{
+      data: statusValues,
+      backgroundColor: statusLabels.map(l => statusColors[l] || '#6b7280'),
+      borderWidth: 2
+    }]
+  },
+  options: { plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+});
+
+new Chart(document.getElementById('qualityChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Good Routes (≥$3.50/mi)', 'Below Threshold'],
+    datasets: [{
+      data: [{{ good_count }}, {{ bad_count }}],
+      backgroundColor: ['#10b981', '#ef4444'],
+      borderRadius: 6
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+  }
+});
+</script>
+{% endblock %}
