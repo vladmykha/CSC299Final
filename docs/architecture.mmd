@@ -1,0 +1,48 @@
+graph TD
+    subgraph Clients["Client Layer"]
+        WEB["🌐 Web Browser\n(HTML/CSS/JS)"]
+        CLI["💻 CLI Client\ncli.py"]
+    end
+
+    subgraph App["Application Layer — app.py (Flask)"]
+        IDX["/ Dashboard\nindex()"]
+
+        subgraph Blueprints["Route Blueprints (routes/)"]
+            SH["shipments.py\nlist · new · edit\ndelete · status · route"]
+            DR["drivers.py\nlist · new · edit · delete"]
+            HB["hubs.py\nlist · new · edit · delete\nroutes CRUD"]
+            AN["analytics.py\nshow_analytics · import_csv"]
+            API["api.py\n/api/stats\n/api/shipments\n/api/drivers\n/api/hubs\n/api/distance/hubs"]
+        end
+    end
+
+    subgraph Core["Core Layer"]
+        RT["routing.py\nNetworkX Graph\nDijkstra shortest path"]
+        DB["db.py\nSQLite interface\ninit · get_db · seed"]
+    end
+
+    subgraph Data["Data Layer"]
+        SQLITE[("logistics.db\nSQLite\n──────────\nhubs\nhub_routes\nshipments\ndrivers")]
+    end
+
+    WEB -->|"HTTP GET/POST\n(forms & pages)"| IDX
+    WEB -->|"fetch() JSON calls"| API
+    CLI -->|"requests library\nHTTP GET"| API
+
+    IDX --> DB
+    SH  --> DB
+    SH  --> RT
+    DR  --> DB
+    HB  --> DB
+    AN  --> DB
+    AN  --> RT
+    API --> DB
+    API --> RT
+
+    DB  --> SQLITE
+
+    style Clients  fill:#dbeafe,stroke:#3b82f6
+    style App      fill:#f0fdf4,stroke:#22c55e
+    style Blueprints fill:#dcfce7,stroke:#16a34a
+    style Core     fill:#fef9c3,stroke:#ca8a04
+    style Data     fill:#fce7f3,stroke:#db2777

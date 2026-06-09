@@ -30,7 +30,7 @@
         <strong>Add Hub</strong>
       </div>
       <div class="card-body">
-        <form method="post" action="{{ url_for('new_hub') }}" class="row g-2 align-items-end">
+        <form method="post" action="{{ url_for('hubs.new_hub') }}" class="row g-2 align-items-end">
           <div class="col-md-3">
             <label class="form-label small">Hub Name</label>
             <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. Chicago Hub" required />
@@ -76,7 +76,7 @@
                             onclick="openEditHub({{ h.id }}, '{{ h.name }}', '{{ h.city }}', '{{ h.state }}', '{{ h.code }}')">
                       <i class="bi bi-pencil"></i>
                     </button>
-                    <form method="post" action="{{ url_for('delete_hub', id=h.id) }}"
+                    <form method="post" action="{{ url_for('hubs.delete_hub', id=h.id) }}"
                           onsubmit="return confirm('Delete hub {{ h.city }}? This will fail if shipments reference it.')">
                       <button class="btn btn-sm btn-outline-danger py-0">
                         <i class="bi bi-trash"></i>
@@ -98,7 +98,7 @@
     <div class="card border-0 shadow-sm mb-3">
       <div class="card-header bg-white py-3"><strong>Add Route</strong></div>
       <div class="card-body">
-        <form method="post" action="{{ url_for('new_route') }}" class="row g-2 align-items-end">
+        <form method="post" action="{{ url_for('hubs.new_route') }}" class="row g-2 align-items-end">
           <div class="col-md-4">
             <label class="form-label small">From Hub</label>
             <select name="hub_from" class="form-select form-select-sm" required>
@@ -150,7 +150,7 @@
                             onclick="openEditRoute({{ r.id }}, {{ r.distance_miles }})">
                       <i class="bi bi-pencil"></i>
                     </button>
-                    <form method="post" action="{{ url_for('delete_route', id=r.id) }}"
+                    <form method="post" action="{{ url_for('hubs.delete_route', id=r.id) }}"
                           onsubmit="return confirm('Delete this route?')">
                       <button class="btn btn-sm btn-outline-danger py-0">
                         <i class="bi bi-trash"></i>

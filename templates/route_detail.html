@@ -2,10 +2,10 @@
 {% block title %}Route — Shipment #{{ shipment.id }}{% endblock %}
 {% block page_title %}Route Optimization — Shipment #{{ shipment.id }}{% endblock %}
 {% block header_actions %}
-  <a href="{{ url_for('edit_shipment', id=shipment.id) }}" class="btn btn-sm btn-outline-secondary">
+  <a href="{{ url_for('shipments.edit_shipment', id=shipment.id) }}" class="btn btn-sm btn-outline-secondary">
     <i class="bi bi-pencil"></i> Edit
   </a>
-  <a href="{{ url_for('shipments') }}" class="btn btn-sm btn-outline-secondary">
+  <a href="{{ url_for('shipments.list_shipments') }}" class="btn btn-sm btn-outline-secondary">
     ← Back
   </a>
 {% endblock %}
@@ -73,7 +73,7 @@
         <!-- Status update -->
         <hr class="my-3" />
         <p class="small fw-semibold mb-2">Update Status</p>
-        <form method="post" action="{{ url_for('update_status', id=shipment.id) }}" class="d-flex gap-2 flex-wrap">
+        <form method="post" action="{{ url_for('shipments.update_status', id=shipment.id) }}" class="d-flex gap-2 flex-wrap">
           {% for st in ['pending', 'in-transit', 'delivered'] %}
           <button name="status" value="{{ st }}"
                   class="btn btn-sm {{ 'btn-dark' if shipment['status'] == st else 'btn-outline-secondary' }}">
@@ -159,7 +159,7 @@
         <div class="text-center py-5 text-muted">
           <i class="bi bi-exclamation-circle fs-2 d-block mb-2"></i>
           No route found between these hubs. Check that a connected path exists in
-          <a href="{{ url_for('hubs') }}">Hubs &amp; Routes</a>.
+          <a href="{{ url_for('hubs.list_hubs') }}">Hubs &amp; Routes</a>.
         </div>
         {% endif %}
       </div>

@@ -1,2 +1,4 @@
 flask
 networkx
+requests
+pytest

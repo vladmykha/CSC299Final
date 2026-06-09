@@ -2,7 +2,7 @@
 {% block title %}Shipments{% endblock %}
 {% block page_title %}Shipments{% endblock %}
 {% block header_actions %}
-  <a href="{{ url_for('new_shipment') }}" class="btn btn-primary btn-sm">
+  <a href="{{ url_for('shipments.new_shipment') }}" class="btn btn-primary btn-sm">
     <i class="bi bi-plus-lg"></i> New Shipment
   </a>
 {% endblock %}
@@ -16,16 +16,16 @@
       <input type="search" name="q" class="form-control form-control-sm"
              placeholder="Search city or cargo…" value="{{ search }}" style="min-width:200px;" />
       <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
-      {% if search %}<a href="{{ url_for('shipments', status=status_filter) }}" class="btn btn-sm btn-link text-muted">Clear</a>{% endif %}
+      {% if search %}<a href="{{ url_for('shipments.list_shipments', status=status_filter) }}" class="btn btn-sm btn-link text-muted">Clear</a>{% endif %}
     </form>
     <div class="btn-group btn-group-sm">
-      <a href="{{ url_for('shipments', q=search) }}"
+      <a href="{{ url_for('shipments.list_shipments', q=search) }}"
          class="btn {{ 'btn-dark' if status_filter == 'all' else 'btn-outline-secondary' }}">All</a>
-      <a href="{{ url_for('shipments', status='pending', q=search) }}"
+      <a href="{{ url_for('shipments.list_shipments', status='pending', q=search) }}"
          class="btn {{ 'btn-warning' if status_filter == 'pending' else 'btn-outline-secondary' }}">Pending</a>
-      <a href="{{ url_for('shipments', status='in-transit', q=search) }}"
+      <a href="{{ url_for('shipments.list_shipments', status='in-transit', q=search) }}"
          class="btn {{ 'btn-info' if status_filter == 'in-transit' else 'btn-outline-secondary' }}">In Transit</a>
-      <a href="{{ url_for('shipments', status='delivered', q=search) }}"
+      <a href="{{ url_for('shipments.list_shipments', status='delivered', q=search) }}"
          class="btn {{ 'btn-success' if status_filter == 'delivered' else 'btn-outline-secondary' }}">Delivered</a>
     </div>
   </div>
@@ -84,15 +84,15 @@
             </td>
             <td>
               <div class="d-flex gap-1">
-                <a href="{{ url_for('shipment_route', id=s.id) }}"
+                <a href="{{ url_for('shipments.shipment_route', id=s.id) }}"
                    class="btn btn-sm btn-outline-primary py-0" title="View Route">
                   <i class="bi bi-signpost-2"></i>
                 </a>
-                <a href="{{ url_for('edit_shipment', id=s.id) }}"
+                <a href="{{ url_for('shipments.edit_shipment', id=s.id) }}"
                    class="btn btn-sm btn-outline-secondary py-0" title="Edit">
                   <i class="bi bi-pencil"></i>
                 </a>
-                <form method="post" action="{{ url_for('delete_shipment', id=s.id) }}"
+                <form method="post" action="{{ url_for('shipments.delete_shipment', id=s.id) }}"
                       onsubmit="return confirm('Delete shipment #{{ s.id }}?')">
                   <button class="btn btn-sm btn-outline-danger py-0" title="Delete">
                     <i class="bi bi-trash"></i>
@@ -109,7 +109,7 @@
     <div class="text-center py-5 text-muted">
       <i class="bi bi-inbox fs-2 d-block mb-2"></i>
       No shipments found.
-      <a href="{{ url_for('new_shipment') }}">Add one →</a>
+      <a href="{{ url_for('shipments.new_shipment') }}">Add one →</a>
     </div>
     {% endif %}
   </div>

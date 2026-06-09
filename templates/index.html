@@ -2,7 +2,7 @@
 {% block title %}Dashboard{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 {% block header_actions %}
-  <a href="{{ url_for('new_shipment') }}" class="btn btn-primary btn-sm">
+  <a href="{{ url_for('shipments.new_shipment') }}" class="btn btn-primary btn-sm">
     <i class="bi bi-plus-lg"></i> New Shipment
   </a>
 {% endblock %}
@@ -83,7 +83,7 @@
                   <div class="small fw-semibold text-{{ prog.color }}">{{ prog.label }}</div>
                 </td>
                 <td><span class="badge status-badge status-{{ s['status'].replace('-','') }}">{{ s['status'] }}</span></td>
-                <td><a href="{{ url_for('shipment_route', id=s.id) }}" class="btn btn-sm btn-outline-secondary py-0">View</a></td>
+                <td><a href="{{ url_for('shipments.shipment_route', id=s.id) }}" class="btn btn-sm btn-outline-secondary py-0">View</a></td>
               </tr>
               {% endfor %}
             </tbody>
@@ -104,7 +104,7 @@
     <div class="card border-0 shadow-sm h-100">
       <div class="card-header bg-white d-flex align-items-center py-3">
         <strong>Recent Shipments</strong>
-        <a href="{{ url_for('shipments') }}" class="ms-auto small text-decoration-none">View all →</a>
+        <a href="{{ url_for('shipments.list_shipments') }}" class="ms-auto small text-decoration-none">View all →</a>
       </div>
       <div class="card-body p-0">
         {% if recent %}
@@ -133,7 +133,7 @@
                   <span class="badge status-badge status-delivered">delivered</span>
                   {% endif %}
                 </td>
-                <td><a href="{{ url_for('shipment_route', id=s.id) }}" class="btn btn-sm btn-outline-secondary py-0">View</a></td>
+                <td><a href="{{ url_for('shipments.shipment_route', id=s.id) }}" class="btn btn-sm btn-outline-secondary py-0">View</a></td>
               </tr>
               {% endfor %}
             </tbody>
@@ -142,7 +142,7 @@
         {% else %}
         <div class="text-center py-5 text-muted">
           No shipments yet.
-          <a href="{{ url_for('new_shipment') }}">Add one →</a>
+          <a href="{{ url_for('shipments.new_shipment') }}">Add one →</a>
         </div>
         {% endif %}
       </div>

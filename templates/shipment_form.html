@@ -90,7 +90,7 @@
                 {% endfor %}
               </select>
               {% if not drivers %}
-              <div class="form-text">No drivers yet. <a href="{{ url_for('drivers') }}">Add a driver →</a></div>
+              <div class="form-text">No drivers yet. <a href="{{ url_for('drivers.list_drivers') }}">Add a driver →</a></div>
               {% endif %}
             </div>
 
@@ -116,7 +116,7 @@
                 <i class="bi bi-check-lg"></i>
                 {{ 'Update Shipment' if shipment else 'Create Shipment' }}
               </button>
-              <a href="{{ url_for('shipments') }}" class="btn btn-outline-secondary">Cancel</a>
+              <a href="{{ url_for('shipments.list_shipments') }}" class="btn btn-outline-secondary">Cancel</a>
             </div>
 
           </div>

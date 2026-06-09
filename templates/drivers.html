@@ -60,7 +60,7 @@
                     onclick="openEditDriver({{ d.id }}, '{{ d.name }}', '{{ d.phone }}', '{{ d.license_number }}', '{{ d.status }}')">
               <i class="bi bi-pencil"></i>
             </button>
-            <form method="post" action="{{ url_for('delete_driver', id=d.id) }}"
+            <form method="post" action="{{ url_for('drivers.delete_driver', id=d.id) }}"
                   onsubmit="return confirm('Delete driver {{ d.name }}?')">
               <button class="btn btn-sm btn-outline-danger py-0"><i class="bi bi-trash"></i></button>
             </form>
@@ -78,7 +78,7 @@
         <div class="current-load-box p-2 rounded-3 {{ 'bg-danger-subtle' if prog.color == 'danger' else ('bg-warning-subtle' if prog.color == 'warning' else 'bg-light') }}">
           <div class="small fw-semibold mb-1 d-flex justify-content-between">
             <span><i class="bi bi-box-seam me-1"></i>Active Load #{{ load.id }}</span>
-            <a href="{{ url_for('shipment_route', id=load.id) }}" class="small text-decoration-none">View →</a>
+            <a href="{{ url_for('shipments.shipment_route', id=load.id) }}" class="small text-decoration-none">View →</a>
           </div>
           <div class="small text-muted mb-2">
             {{ load.origin_city }} → {{ load.dest_city }}
@@ -107,7 +107,7 @@
           <i class="bi bi-inbox d-block mb-1 fs-5 opacity-50"></i>
           No active load assigned
           {% if d.status == 'available' %}
-          <div class="mt-1"><a href="{{ url_for('new_shipment') }}">Assign a shipment →</a></div>
+          <div class="mt-1"><a href="{{ url_for('shipments.new_shipment') }}">Assign a shipment →</a></div>
           {% endif %}
         </div>
         {% endif %}
@@ -134,7 +134,7 @@
 <!-- Add Driver Modal -->
 <div class="modal fade" id="addDriverModal" tabindex="-1">
   <div class="modal-dialog">
-    <form method="post" action="{{ url_for('new_driver') }}" class="modal-content">
+    <form method="post" action="{{ url_for('drivers.new_driver') }}" class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title"><i class="bi bi-person-plus me-1"></i> Add Driver</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
