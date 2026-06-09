@@ -381,5 +381,24 @@ def api_hubs():
     return jsonify({'hubs': hubs, 'routes': routes})
 
 
+@app.route('/api/distance/hubs/<int:origin_id>/<int:dest_id>')
+def api_hub_distance(origin_id, dest_id):
+    conn = db.get_db()
+    result = routing.get_route(conn, origin_id, dest_id)
+    conn.close()
+    if not result:
+        return jsonify({'error': 'No route found between these hubs.'}), 404
+    GOOD_RATE = 3.5
+    return jsonify({
+        'distance': result['distance'],
+        'hops': result['hops'],
+        'min_good_pay': round(result['distance'] * GOOD_RATE, 2),
+        'path': [
+            {'code': h['code'], 'city': h['city'], 'state': h['state']}
+            for h in result['path_details']
+        ],
+    })
+
+
 if __name__ == '__main__':
     app.run(debug=True)

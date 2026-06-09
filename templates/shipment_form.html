@@ -3,16 +3,21 @@
 {% block page_title %}{{ 'Edit Shipment #' + shipment.id|string if shipment else 'New Shipment' }}{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-lg-7">
+<div class="row g-3">
+
+  <!-- Shipment Form -->
+  <div class="col-lg-6">
     <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 fw-semibold">
+        <i class="bi bi-box-seam me-1"></i> Shipment Details
+      </div>
       <div class="card-body p-4">
-        <form method="post">
+        <form method="post" id="shipmentForm">
           <div class="row g-3">
 
-            <div class="col-md-6">
+            <div class="col-12">
               <label class="form-label fw-semibold">Origin Hub</label>
-              <select name="origin_hub" class="form-select" required>
+              <select name="origin_hub" id="originHub" class="form-select" required>
                 <option value="">Select origin…</option>
                 {% for h in hubs %}
                 <option value="{{ h.id }}"
@@ -23,9 +28,9 @@
               </select>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-12">
               <label class="form-label fw-semibold">Destination Hub</label>
-              <select name="destination_hub" class="form-select" required>
+              <select name="destination_hub" id="destHub" class="form-select" required>
                 <option value="">Select destination…</option>
                 {% for h in hubs %}
                 <option value="{{ h.id }}"
@@ -36,39 +41,38 @@
               </select>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-6">
               <label class="form-label fw-semibold">Cargo Type</label>
               <input type="text" name="cargo_type" class="form-control"
                      placeholder="e.g. Electronics, Furniture…"
                      value="{{ shipment.cargo_type if shipment else '' }}" required />
             </div>
 
-            <div class="col-md-6">
+            <div class="col-6">
               <label class="form-label fw-semibold">Weight (lbs)</label>
               <input type="number" name="weight_lbs" class="form-control"
                      step="0.01" min="1"
                      value="{{ shipment.weight_lbs if shipment else '' }}" required />
             </div>
 
-            <div class="col-md-6">
+            <div class="col-6">
               <label class="form-label fw-semibold">Total Pay ($)</label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
-                <input type="number" name="total_pay" class="form-control"
+                <input type="number" name="total_pay" id="totalPay" class="form-control"
                        step="0.01" min="0"
                        value="{{ shipment.total_pay if shipment else '' }}" required />
               </div>
-              <div class="form-text">Route is <strong class="text-success">good</strong> if pay ≥ 3.5× mileage.</div>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-6">
               <label class="form-label fw-semibold">Deadline</label>
               <input type="date" name="deadline" class="form-control"
                      value="{{ shipment.deadline if shipment else '' }}" required />
             </div>
 
             {% if shipment %}
-            <div class="col-md-6">
+            <div class="col-6">
               <label class="form-label fw-semibold">Status</label>
               <select name="status" class="form-select">
                 {% for st in ['pending', 'in-transit', 'delivered'] %}
@@ -81,7 +85,7 @@
             <div class="col-12">
               <label class="form-label fw-semibold">Notes <span class="text-muted fw-normal">(optional)</span></label>
               <textarea name="notes" class="form-control" rows="2"
-                        placeholder="Any special handling instructions…">{{ shipment.notes if shipment else '' }}</textarea>
+                        placeholder="Special handling instructions…">{{ shipment.notes if shipment else '' }}</textarea>
             </div>
 
             <div class="col-12 d-flex gap-2 pt-2">
@@ -91,10 +95,306 @@
               </button>
               <a href="{{ url_for('shipments') }}" class="btn btn-outline-secondary">Cancel</a>
             </div>
+
           </div>
         </form>
       </div>
     </div>
   </div>
+
+  <!-- Distance Calculator -->
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 fw-semibold">
+        <i class="bi bi-rulers me-1"></i> Distance Calculator
+      </div>
+      <div class="card-body p-0">
+        <ul class="nav nav-tabs px-3 pt-2" id="calcTabs">
+          <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-hub-dist">
+              <i class="bi bi-diagram-3 me-1"></i>Hub to Hub
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-addr-dist">
+              <i class="bi bi-geo-alt me-1"></i>Address to Address
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content p-3">
+
+          <!-- Hub to Hub Tab -->
+          <div class="tab-pane fade show active" id="tab-hub-dist">
+            <p class="small text-muted mb-3">
+              Automatically calculated from your selected hubs using the shortest path through the network.
+            </p>
+
+            <div id="hubDistResult">
+              <div class="text-center py-4 text-muted" id="hubDistPlaceholder">
+                <i class="bi bi-arrow-left-right fs-2 d-block mb-2 opacity-25"></i>
+                Select both hubs in the form to see the route distance.
+              </div>
+            </div>
+          </div>
+
+          <!-- Address to Address Tab -->
+          <div class="tab-pane fade" id="tab-addr-dist">
+            <p class="small text-muted mb-3">
+              Calculate road distance between a pickup address and a delivery address.
+            </p>
+            <div class="row g-2 mb-3">
+              <div class="col-12">
+                <label class="form-label small fw-semibold">Pickup Address</label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text"><i class="bi bi-geo-alt-fill text-success"></i></span>
+                  <input type="text" id="addrFrom" class="form-control"
+                         placeholder="e.g. 123 Main St, Chicago, IL" />
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-semibold">Delivery Address</label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text"><i class="bi bi-geo-alt-fill text-danger"></i></span>
+                  <input type="text" id="addrTo" class="form-control"
+                         placeholder="e.g. 456 Oak Ave, Los Angeles, CA" />
+                </div>
+              </div>
+              <div class="col-12">
+                <button id="calcAddrBtn" class="btn btn-primary btn-sm w-100" onclick="calcAddressDistance()">
+                  <i class="bi bi-calculator me-1"></i> Calculate Road Distance
+                </button>
+              </div>
+            </div>
+
+            <div id="addrDistResult"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Good Route Guide -->
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-body py-3 px-4">
+        <p class="small fw-semibold mb-1"><i class="bi bi-info-circle-fill text-primary me-1"></i>Good Route Threshold</p>
+        <p class="small text-muted mb-0">
+          A route is considered <strong class="text-success">good</strong> if the total pay is at least
+          <strong>$3.50 per mile</strong>. The calculator will show the minimum pay required for each distance.
+        </p>
+        <div id="payGuide" class="mt-2 d-none">
+          <div class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-light">
+            <span class="small text-muted">Min pay for good route:</span>
+            <span id="payGuideValue" class="fw-bold text-success fs-6"></span>
+          </div>
+          <div id="payFeedback" class="mt-2 small"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const GOOD_RATE = 3.5;
+
+// ── Hub-to-Hub Distance ───────────────────────────────────────────────────
+
+const originSel = document.getElementById('originHub');
+const destSel   = document.getElementById('destHub');
+const totalPayInput = document.getElementById('totalPay');
+
+function fetchHubDistance() {
+  const o = originSel.value;
+  const d = destSel.value;
+  if (!o || !d || o === d) return;
+
+  const el = document.getElementById('hubDistResult');
+  el.innerHTML = `<div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Calculating route…</div>`;
+
+  fetch(`/api/distance/hubs/${o}/${d}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        el.innerHTML = `<div class="alert alert-warning py-2 small">${data.error}</div>`;
+        return;
+      }
+      renderHubResult(el, data);
+      updatePayGuide(data.distance);
+    })
+    .catch(() => {
+      el.innerHTML = `<div class="alert alert-danger py-2 small">Could not fetch route.</div>`;
+    });
+}
+
+function renderHubResult(el, data) {
+  const pathHtml = data.path.map((h, i) => {
+    const cls = i === 0 ? 'hub-origin' : (i === data.path.length - 1 ? 'hub-dest' : 'hub-mid');
+    return `<div class="hub-stop ${cls}"><div class="hub-code">${h.code}</div><div class="hub-city">${h.city}</div></div>${i < data.path.length - 1 ? '<span class="route-arrow"><i class="bi bi-arrow-right"></i></span>' : ''}`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="row g-2 mb-3 text-center">
+      <div class="col-6">
+        <div class="metric-box p-3 rounded-3 bg-light">
+          <div class="metric-value">${data.distance.toLocaleString()} mi</div>
+          <div class="metric-label">Shortest Route Distance</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="metric-box p-3 rounded-3 bg-light">
+          <div class="metric-value">${data.hops} hub${data.hops !== 1 ? 's' : ''}</div>
+          <div class="metric-label">Intermediate Stops</div>
+        </div>
+      </div>
+    </div>
+    <div class="route-path d-flex flex-wrap align-items-center gap-1 mb-2">${pathHtml}</div>`;
+}
+
+function updatePayGuide(distanceMiles) {
+  const minPay = (distanceMiles * GOOD_RATE).toFixed(2);
+  const guide  = document.getElementById('payGuide');
+  const val    = document.getElementById('payGuideValue');
+  const fb     = document.getElementById('payFeedback');
+  guide.classList.remove('d-none');
+  val.textContent = `$${parseFloat(minPay).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+
+  function checkPay() {
+    const entered = parseFloat(totalPayInput.value) || 0;
+    if (!entered) { fb.innerHTML = ''; return; }
+    if (entered >= distanceMiles * GOOD_RATE) {
+      fb.innerHTML = `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>$${entered.toFixed(2)} qualifies as a good route ($${(entered / distanceMiles).toFixed(2)}/mi).</span>`;
+    } else {
+      const shortfall = (distanceMiles * GOOD_RATE - entered).toFixed(2);
+      fb.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>$${entered.toFixed(2)} is $${shortfall} short of the good-route threshold.</span>`;
+    }
+  }
+  checkPay();
+  totalPayInput.removeEventListener('input', totalPayInput._payHandler);
+  totalPayInput._payHandler = checkPay;
+  totalPayInput.addEventListener('input', totalPayInput._payHandler);
+}
+
+originSel.addEventListener('change', fetchHubDistance);
+destSel.addEventListener('change', fetchHubDistance);
+
+// Auto-trigger if editing an existing shipment with hubs pre-selected
+if (originSel.value && destSel.value) fetchHubDistance();
+
+// Prevent same hub selection
+function syncHubs() {
+  if (originSel.value && destSel.value && originSel.value === destSel.value) {
+    destSel.value = '';
+  }
+}
+originSel.addEventListener('change', syncHubs);
+destSel.addEventListener('change', syncHubs);
+
+
+// ── Address-to-Address Distance ───────────────────────────────────────────
+
+async function geocode(address) {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=us`;
+  const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+  const data = await res.json();
+  if (!data.length) throw new Error(`Could not find address: "${address}"`);
+  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), display: data[0].display_name };
+}
+
+async function calcAddressDistance() {
+  const fromAddr = document.getElementById('addrFrom').value.trim();
+  const toAddr   = document.getElementById('addrTo').value.trim();
+  const result   = document.getElementById('addrDistResult');
+  const btn      = document.getElementById('calcAddrBtn');
+
+  if (!fromAddr || !toAddr) {
+    result.innerHTML = `<div class="alert alert-warning py-2 small">Please enter both addresses.</div>`;
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Calculating…`;
+  result.innerHTML = '';
+
+  try {
+    const [from, to] = await Promise.all([geocode(fromAddr), geocode(toAddr)]);
+
+    // Road distance via OSRM public API
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}?overview=false`;
+    const osrmRes  = await fetch(osrmUrl);
+    const osrmData = await osrmRes.json();
+
+    let roadMiles = null;
+    if (osrmData.code === 'Ok' && osrmData.routes.length) {
+      roadMiles = (osrmData.routes[0].distance / 1609.34);
+    }
+
+    // Haversine straight-line fallback
+    const R = 3958.8;
+    const dLat = (to.lat - from.lat) * Math.PI / 180;
+    const dLon = (to.lon - from.lon) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(from.lat * Math.PI/180) * Math.cos(to.lat * Math.PI/180) * Math.sin(dLon/2)**2;
+    const straightMiles = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    const displayMiles = roadMiles !== null ? roadMiles : straightMiles;
+    const minPay = (displayMiles * GOOD_RATE).toFixed(2);
+
+    result.innerHTML = `
+      <div class="mb-3">
+        <div class="d-flex align-items-start gap-2 mb-1">
+          <i class="bi bi-geo-alt-fill text-success mt-1"></i>
+          <span class="small">${from.display.split(',').slice(0,3).join(',')}</span>
+        </div>
+        <div class="d-flex align-items-start gap-2">
+          <i class="bi bi-geo-alt-fill text-danger mt-1"></i>
+          <span class="small">${to.display.split(',').slice(0,3).join(',')}</span>
+        </div>
+      </div>
+
+      <div class="row g-2 text-center mb-3">
+        ${roadMiles !== null ? `
+        <div class="col-6">
+          <div class="metric-box p-3 rounded-3 bg-light">
+            <div class="metric-value">${roadMiles.toFixed(1)} mi</div>
+            <div class="metric-label">Road Distance</div>
+          </div>
+        </div>` : ''}
+        <div class="col-${roadMiles !== null ? '6' : '12'}">
+          <div class="metric-box p-3 rounded-3 bg-light">
+            <div class="metric-value">${straightMiles.toFixed(1)} mi</div>
+            <div class="metric-label">Straight-line</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-light mb-2">
+        <span class="small text-muted">Min pay for good route (3.5×):</span>
+        <span class="fw-bold text-success">$${parseFloat(minPay).toLocaleString('en-US', {minimumFractionDigits:2})}</span>
+      </div>
+
+      <button class="btn btn-sm btn-outline-primary w-100"
+              onclick="document.getElementById('totalPay').value='${minPay}'; document.getElementById('totalPay').dispatchEvent(new Event('input'));">
+        <i class="bi bi-arrow-up-circle me-1"></i> Use min good-route pay ($${parseFloat(minPay).toLocaleString('en-US',{minimumFractionDigits:2})})
+      </button>`;
+
+    updatePayGuide(displayMiles);
+
+  } catch (err) {
+    result.innerHTML = `<div class="alert alert-danger py-2 small"><i class="bi bi-exclamation-circle me-1"></i>${err.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i class="bi bi-calculator me-1"></i> Calculate Road Distance`;
+  }
+}
+
+// Allow Enter key in address fields
+document.getElementById('addrTo').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); calcAddressDistance(); }
+});
+document.getElementById('addrFrom').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); calcAddressDistance(); }
+});
+</script>
 {% endblock %}
