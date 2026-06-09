@@ -193,3 +193,22 @@ body {
 /* ── Misc ────────────────────────────────────────────────────────────── */
 a { color: #3b82f6; }
 .form-label { font-size: 0.85rem; color: #374151; }
+
+/* ── Driver Cards ────────────────────────────────────────────────────── */
+.driver-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.driver-status-available  { background: #d1fae5; color: #065f46; font-size:.75rem; padding:.25em .6em; border-radius:20px; }
+.driver-status-onroute    { background: #dbeafe; color: #1e40af; font-size:.75rem; padding:.25em .6em; border-radius:20px; }
+.driver-status-offduty    { background: #f1f5f9; color: #475569; font-size:.75rem; padding:.25em .6em; border-radius:20px; }
+
+.current-load-box { border: 1px solid #e2e8f0; }
+

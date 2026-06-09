@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% block title %}Drivers{% endblock %}
+{% block page_title %}Drivers{% endblock %}
+{% block header_actions %}
+  <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDriverModal">
+    <i class="bi bi-plus-lg"></i> Add Driver
+  </button>
+{% endblock %}
+
+{% block content %}
+
+<!-- Needs New Load Alert -->
+{% set urgent = [] %}
+{% for d in drivers %}
+  {% set load = active_loads.get(d.id) %}
+  {% if load %}
+    {% set prog = shipment_progress(load) %}
+    {% if prog.color == 'danger' %}
+      {% if urgent.append(d) %}{% endif %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+{% if urgent %}
+<div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+  <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+  <div>
+    <strong>Find new loads:</strong>
+    {% for d in urgent %}
+    <span class="badge bg-danger me-1">{{ d.name }}</span>
+    {% endfor %}
+    — current delivery deadline is critical. Start looking for their next load now.
+  </div>
+</div>
+{% endif %}
+
+<!-- Driver Cards -->
+{% if drivers %}
+<div class="row g-3">
+  {% for d in drivers %}
+  {% set load = active_loads.get(d.id) %}
+  {% set prog = shipment_progress(load) if load else None %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card border-0 shadow-sm h-100 driver-card {{ 'border-start border-4 border-danger' if prog and prog.color == 'danger' else '' }}">
+      <div class="card-body">
+
+        <!-- Header row -->
+        <div class="d-flex align-items-start justify-content-between mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="driver-avatar bg-{{ 'success' if d.status == 'available' else ('primary' if d.status == 'on-route' else 'secondary') }}-subtle
+                        text-{{ 'success' if d.status == 'available' else ('primary' if d.status == 'on-route' else 'secondary') }}">
+              <i class="bi bi-person-fill"></i>
+            </div>
+            <div>
+              <div class="fw-semibold">{{ d.name }}</div>
+              <span class="badge driver-status-{{ d.status.replace('-','') }}">{{ d.status }}</span>
+            </div>
+          </div>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-outline-secondary py-0"
+                    onclick="openEditDriver({{ d.id }}, '{{ d.name }}', '{{ d.phone }}', '{{ d.license_number }}', '{{ d.status }}')">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <form method="post" action="{{ url_for('delete_driver', id=d.id) }}"
+                  onsubmit="return confirm('Delete driver {{ d.name }}?')">
+              <button class="btn btn-sm btn-outline-danger py-0"><i class="bi bi-trash"></i></button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Contact info -->
+        <div class="small text-muted mb-3">
+          {% if d.phone %}<div><i class="bi bi-telephone me-1"></i>{{ d.phone }}</div>{% endif %}
+          {% if d.license_number %}<div><i class="bi bi-card-text me-1"></i>CDL: {{ d.license_number }}</div>{% endif %}
+        </div>
+
+        <!-- Current load -->
+        {% if load %}
+        <div class="current-load-box p-2 rounded-3 {{ 'bg-danger-subtle' if prog.color == 'danger' else ('bg-warning-subtle' if prog.color == 'warning' else 'bg-light') }}">
+          <div class="small fw-semibold mb-1 d-flex justify-content-between">
+            <span><i class="bi bi-box-seam me-1"></i>Active Load #{{ load.id }}</span>
+            <a href="{{ url_for('shipment_route', id=load.id) }}" class="small text-decoration-none">View →</a>
+          </div>
+          <div class="small text-muted mb-2">
+            {{ load.origin_city }} → {{ load.dest_city }}
+            <span class="ms-2 badge status-badge status-{{ load['status'].replace('-','') }}">{{ load['status'] }}</span>
+          </div>
+          <!-- Progress bar -->
+          <div class="progress mb-1" style="height:8px;" title="{{ prog.pct }}% of deadline elapsed">
+            <div class="progress-bar bg-{{ prog.color }}" style="width:{{ prog.pct }}%;"></div>
+          </div>
+          <div class="d-flex justify-content-between">
+            <small class="text-muted">Deadline: {{ load.deadline }}</small>
+            <small class="fw-semibold text-{{ prog.color }}">{{ prog.label }}</small>
+          </div>
+          {% if prog.color == 'danger' %}
+          <div class="mt-2 small text-danger fw-semibold">
+            <i class="bi bi-search me-1"></i>Find next load for this driver soon
+          </div>
+          {% elif prog.color == 'warning' %}
+          <div class="mt-2 small text-warning fw-semibold">
+            <i class="bi bi-clock me-1"></i>Approaching deadline — plan next load
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="text-center py-3 text-muted small bg-light rounded-3">
+          <i class="bi bi-inbox d-block mb-1 fs-5 opacity-50"></i>
+          No active load assigned
+          {% if d.status == 'available' %}
+          <div class="mt-1"><a href="{{ url_for('new_shipment') }}">Assign a shipment →</a></div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="card border-0 shadow-sm">
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-person-badge fs-2 d-block mb-2 opacity-25"></i>
+    No drivers yet.
+    <button class="btn btn-link p-0 ms-1" data-bs-toggle="modal" data-bs-target="#addDriverModal">
+      Add your first driver →
+    </button>
+  </div>
+</div>
+{% endif %}
+
+
+<!-- Add Driver Modal -->
+<div class="modal fade" id="addDriverModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" action="{{ url_for('new_driver') }}" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-person-plus me-1"></i> Add Driver</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body row g-3">
+        <div class="col-12">
+          <label class="form-label fw-semibold">Full Name</label>
+          <input type="text" name="name" class="form-control" placeholder="e.g. Marcus Johnson" required />
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-semibold">Phone</label>
+          <input type="tel" name="phone" class="form-control" placeholder="(312) 555-0100" />
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-semibold">CDL / License #</label>
+          <input type="text" name="license_number" class="form-control" placeholder="e.g. IL-CDL-A-1234" />
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-semibold">Status</label>
+          <select name="status" class="form-select">
+            <option value="available">Available</option>
+            <option value="on-route">On Route</option>
+            <option value="off-duty">Off Duty</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Add Driver</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Driver Modal -->
+<div class="modal fade" id="editDriverModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" id="editDriverForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Driver</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body row g-3">
+        <div class="col-12">
+          <label class="form-label fw-semibold">Full Name</label>
+          <input type="text" name="name" id="editDrvName" class="form-control" required />
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-semibold">Phone</label>
+          <input type="tel" name="phone" id="editDrvPhone" class="form-control" />
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-semibold">CDL / License #</label>
+          <input type="text" name="license_number" id="editDrvLicense" class="form-control" />
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-semibold">Status</label>
+          <select name="status" id="editDrvStatus" class="form-select">
+            <option value="available">Available</option>
+            <option value="on-route">On Route</option>
+            <option value="off-duty">Off Duty</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openEditDriver(id, name, phone, license, status) {
+  document.getElementById('editDrvName').value    = name;
+  document.getElementById('editDrvPhone').value   = phone;
+  document.getElementById('editDrvLicense').value = license;
+  document.getElementById('editDrvStatus').value  = status;
+  document.getElementById('editDriverForm').action = '/drivers/' + id + '/edit';
+  new bootstrap.Modal(document.getElementById('editDriverModal')).show();
+}
+</script>
+{% endblock %}

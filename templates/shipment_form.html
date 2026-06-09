@@ -71,6 +71,29 @@
                      value="{{ shipment.deadline if shipment else '' }}" required />
             </div>
 
+            <div class="col-12">
+              <label class="form-label fw-semibold">
+                <i class="bi bi-person-badge me-1"></i>Assign Driver
+                <span class="text-muted fw-normal">(optional)</span>
+              </label>
+              <select name="driver_id" class="form-select">
+                <option value="">— Unassigned —</option>
+                {% for dr in drivers %}
+                <option value="{{ dr.id }}"
+                  {{ 'selected' if shipment and shipment.driver_id == dr.id }}>
+                  {{ dr.name }}
+                  {% if dr.status == 'available' %}✓ Available
+                  {% elif dr.status == 'on-route' %}· On Route
+                  {% else %}· Off Duty{% endif %}
+                  {% if dr.license_number %}({{ dr.license_number }}){% endif %}
+                </option>
+                {% endfor %}
+              </select>
+              {% if not drivers %}
+              <div class="form-text">No drivers yet. <a href="{{ url_for('drivers') }}">Add a driver →</a></div>
+              {% endif %}
+            </div>
+
             {% if shipment %}
             <div class="col-6">
               <label class="form-label fw-semibold">Status</label>

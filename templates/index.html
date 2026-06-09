@@ -68,10 +68,20 @@
             </thead>
             <tbody>
               {% for s in delayed %}
+              {% set prog = shipment_progress(s) %}
               <tr>
                 <td class="text-muted">#{{ s.id }}</td>
-                <td>{{ s.origin_city }} → {{ s.dest_city }}</td>
-                <td class="text-danger fw-semibold">{{ s.deadline }}</td>
+                <td>
+                  {{ s.origin_city }} → {{ s.dest_city }}
+                  {% if s.driver_name %}<div class="small text-muted"><i class="bi bi-person-circle me-1"></i>{{ s.driver_name }}</div>{% endif %}
+                </td>
+                <td style="min-width:110px;">
+                  <div class="small text-danger fw-semibold">{{ s.deadline }}</div>
+                  <div class="progress my-1" style="height:5px;">
+                    <div class="progress-bar bg-{{ prog.color }}" style="width:{{ prog.pct }}%;"></div>
+                  </div>
+                  <div class="small fw-semibold text-{{ prog.color }}">{{ prog.label }}</div>
+                </td>
                 <td><span class="badge status-badge status-{{ s['status'].replace('-','') }}">{{ s['status'] }}</span></td>
                 <td><a href="{{ url_for('shipment_route', id=s.id) }}" class="btn btn-sm btn-outline-secondary py-0">View</a></td>
               </tr>
@@ -105,11 +115,24 @@
             </thead>
             <tbody>
               {% for s in recent %}
+              {% set prog = shipment_progress(s) %}
               <tr>
                 <td class="text-muted">#{{ s.id }}</td>
                 <td>{{ s.origin_city }} → {{ s.dest_city }}</td>
-                <td>{{ s.cargo_type }}</td>
-                <td><span class="badge status-badge status-{{ s['status'].replace('-','') }}">{{ s['status'] }}</span></td>
+                <td>
+                  {{ s.cargo_type }}
+                  {% if s.driver_name %}<div class="small text-muted"><i class="bi bi-person-circle me-1"></i>{{ s.driver_name }}</div>{% endif %}
+                </td>
+                <td style="min-width:100px;">
+                  {% if s['status'] != 'delivered' %}
+                  <div class="progress mb-1" style="height:5px;">
+                    <div class="progress-bar bg-{{ prog.color }}" style="width:{{ prog.pct }}%;"></div>
+                  </div>
+                  <div class="small text-{{ prog.color }}">{{ prog.label }}</div>
+                  {% else %}
+                  <span class="badge status-badge status-delivered">delivered</span>
+                  {% endif %}
+                </td>
                 <td><a href="{{ url_for('shipment_route', id=s.id) }}" class="btn btn-sm btn-outline-secondary py-0">View</a></td>
               </tr>
               {% endfor %}

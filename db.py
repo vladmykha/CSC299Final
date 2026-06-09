@@ -16,6 +16,12 @@ def init_db():
     with open(os.path.join(os.path.dirname(__file__), 'schema.sql')) as f:
         conn.executescript(f.read())
     conn.commit()
+    # Migrate existing DBs that pre-date the drivers feature
+    try:
+        conn.execute('ALTER TABLE shipments ADD COLUMN driver_id INTEGER REFERENCES drivers(id)')
+        conn.commit()
+    except Exception:
+        pass  # Column already exists
     if conn.execute('SELECT COUNT(*) FROM hubs').fetchone()[0] == 0:
         _seed_data(conn)
     conn.close()

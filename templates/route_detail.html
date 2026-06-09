@@ -37,11 +37,31 @@
           <dd class="col-7 fw-semibold">${{ "%.2f"|format(shipment.total_pay) }}</dd>
 
           <dt class="col-5 text-muted">Deadline</dt>
-          <dd class="col-7">{{ shipment.deadline }}</dd>
+          <dd class="col-7">
+            {{ shipment.deadline }}
+            {% set prog = shipment_progress(shipment) %}
+            {% if shipment['status'] != 'delivered' %}
+            <div class="progress my-1" style="height:6px;">
+              <div class="progress-bar bg-{{ prog.color }}" style="width:{{ prog.pct }}%;"></div>
+            </div>
+            <small class="fw-semibold text-{{ prog.color }}">{{ prog.label }}</small>
+            {% endif %}
+          </dd>
 
           <dt class="col-5 text-muted">Status</dt>
           <dd class="col-7">
             <span class="badge status-badge status-{{ shipment['status'].replace('-','') }}">{{ shipment['status'] }}</span>
+          </dd>
+
+          <dt class="col-5 text-muted">Driver</dt>
+          <dd class="col-7">
+            {% if shipment.driver_name %}
+            <span><i class="bi bi-person-circle me-1 text-secondary"></i>{{ shipment.driver_name }}</span>
+            {% if shipment.driver_phone %}<div class="small text-muted">{{ shipment.driver_phone }}</div>{% endif %}
+            {% if shipment.driver_license %}<div class="small text-muted">CDL: {{ shipment.driver_license }}</div>{% endif %}
+            {% else %}
+            <span class="text-muted">Unassigned</span>
+            {% endif %}
           </dd>
 
           {% if shipment.notes %}

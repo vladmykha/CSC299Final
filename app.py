@@ -1,6 +1,6 @@
 import csv
 import io
-from datetime import datetime
+from datetime import datetime, date
 
 from flask import (Flask, flash, jsonify, redirect, render_template,
                    request, url_for)
@@ -12,6 +12,32 @@ app = Flask(__name__)
 app.secret_key = 'csc299-logitrack-secret'
 
 db.init_db()
+
+
+@app.template_global()
+def shipment_progress(s):
+    """Return progress dict for a shipment row: pct, color, label."""
+    if s['status'] == 'delivered':
+        return {'pct': 100, 'color': 'success', 'label': 'Delivered', 'overdue': False}
+    try:
+        created  = datetime.strptime(s['created_at'][:10], '%Y-%m-%d').date()
+        deadline = datetime.strptime(s['deadline'], '%Y-%m-%d').date()
+        today    = date.today()
+        total    = max((deadline - created).days, 1)
+        elapsed  = (today - created).days
+        pct      = min(100, max(0, int(elapsed / total * 100)))
+        days_left = (deadline - today).days
+        overdue  = days_left < 0
+        if overdue:
+            label = f'Overdue {abs(days_left)}d'
+        elif days_left == 0:
+            label = 'Due today'
+        else:
+            label = f'{days_left}d left'
+        color = 'danger' if pct >= 85 else ('warning' if pct >= 60 else 'success')
+        return {'pct': pct, 'color': color, 'label': label, 'overdue': overdue}
+    except Exception:
+        return {'pct': 0, 'color': 'secondary', 'label': '', 'overdue': False}
 
 
 # ── Dashboard ──────────────────────────────────────────────────────────────
@@ -27,18 +53,20 @@ def index():
     }
     today = datetime.now().strftime('%Y-%m-%d')
     delayed = conn.execute(
-        "SELECT s.*, h1.city AS origin_city, h2.city AS dest_city "
+        "SELECT s.*, h1.city AS origin_city, h2.city AS dest_city, d.name AS driver_name "
         "FROM shipments s "
         "JOIN hubs h1 ON s.origin_hub=h1.id "
         "JOIN hubs h2 ON s.destination_hub=h2.id "
+        "LEFT JOIN drivers d ON s.driver_id=d.id "
         "WHERE s.status != 'delivered' AND s.deadline < ? "
         "ORDER BY s.deadline", (today,)
     ).fetchall()
     recent = conn.execute(
-        "SELECT s.*, h1.city AS origin_city, h2.city AS dest_city "
+        "SELECT s.*, h1.city AS origin_city, h2.city AS dest_city, d.name AS driver_name "
         "FROM shipments s "
         "JOIN hubs h1 ON s.origin_hub=h1.id "
         "JOIN hubs h2 ON s.destination_hub=h2.id "
+        "LEFT JOIN drivers d ON s.driver_id=d.id "
         "ORDER BY s.created_at DESC LIMIT 6"
     ).fetchall()
     conn.close()
@@ -54,10 +82,11 @@ def shipments():
     conn = db.get_db()
     base = (
         "SELECT s.*, h1.city AS origin_city, h1.code AS origin_code, "
-        "h2.city AS dest_city, h2.code AS dest_code "
+        "h2.city AS dest_city, h2.code AS dest_code, d.name AS driver_name "
         "FROM shipments s "
         "JOIN hubs h1 ON s.origin_hub=h1.id "
-        "JOIN hubs h2 ON s.destination_hub=h2.id"
+        "JOIN hubs h2 ON s.destination_hub=h2.id "
+        "LEFT JOIN drivers d ON s.driver_id=d.id"
     )
     params = []
     conditions = []
@@ -78,48 +107,52 @@ def shipments():
 @app.route('/shipments/new', methods=['GET', 'POST'])
 def new_shipment():
     conn = db.get_db()
-    hubs = conn.execute('SELECT * FROM hubs ORDER BY city').fetchall()
+    hubs    = conn.execute('SELECT * FROM hubs ORDER BY city').fetchall()
+    drivers = conn.execute("SELECT * FROM drivers WHERE status != 'off-duty' ORDER BY name").fetchall()
     if request.method == 'POST':
+        driver_id = request.form.get('driver_id') or None
         conn.execute(
-            'INSERT INTO shipments (origin_hub, destination_hub, cargo_type, weight_lbs, deadline, total_pay, notes) '
-            'VALUES (?,?,?,?,?,?,?)',
+            'INSERT INTO shipments (origin_hub, destination_hub, cargo_type, weight_lbs, deadline, total_pay, notes, driver_id) '
+            'VALUES (?,?,?,?,?,?,?,?)',
             (request.form['origin_hub'], request.form['destination_hub'],
              request.form['cargo_type'], float(request.form['weight_lbs']),
              request.form['deadline'], float(request.form['total_pay']),
-             request.form.get('notes', ''))
+             request.form.get('notes', ''), driver_id)
         )
         conn.commit()
         conn.close()
         flash('Shipment added.', 'success')
         return redirect(url_for('shipments'))
     conn.close()
-    return render_template('shipment_form.html', hubs=hubs, shipment=None)
+    return render_template('shipment_form.html', hubs=hubs, drivers=drivers, shipment=None)
 
 
 @app.route('/shipments/<int:id>/edit', methods=['GET', 'POST'])
 def edit_shipment(id):
     conn = db.get_db()
     shipment = conn.execute('SELECT * FROM shipments WHERE id=?', (id,)).fetchone()
-    hubs = conn.execute('SELECT * FROM hubs ORDER BY city').fetchall()
+    hubs    = conn.execute('SELECT * FROM hubs ORDER BY city').fetchall()
+    drivers = conn.execute('SELECT * FROM drivers ORDER BY name').fetchall()
     if not shipment:
         flash('Shipment not found.', 'danger')
         conn.close()
         return redirect(url_for('shipments'))
     if request.method == 'POST':
+        driver_id = request.form.get('driver_id') or None
         conn.execute(
             'UPDATE shipments SET origin_hub=?, destination_hub=?, cargo_type=?, '
-            'weight_lbs=?, deadline=?, total_pay=?, notes=?, status=? WHERE id=?',
+            'weight_lbs=?, deadline=?, total_pay=?, notes=?, status=?, driver_id=? WHERE id=?',
             (request.form['origin_hub'], request.form['destination_hub'],
              request.form['cargo_type'], float(request.form['weight_lbs']),
              request.form['deadline'], float(request.form['total_pay']),
-             request.form.get('notes', ''), request.form['status'], id)
+             request.form.get('notes', ''), request.form['status'], driver_id, id)
         )
         conn.commit()
         conn.close()
         flash('Shipment updated.', 'success')
         return redirect(url_for('shipments'))
     conn.close()
-    return render_template('shipment_form.html', hubs=hubs, shipment=shipment)
+    return render_template('shipment_form.html', hubs=hubs, drivers=drivers, shipment=shipment)
 
 
 @app.route('/shipments/<int:id>/delete', methods=['POST'])
@@ -146,10 +179,12 @@ def shipment_route(id):
     conn = db.get_db()
     shipment = conn.execute(
         "SELECT s.*, h1.city AS origin_city, h1.code AS origin_code, "
-        "h2.city AS dest_city, h2.code AS dest_code "
+        "h2.city AS dest_city, h2.code AS dest_code, "
+        "d.name AS driver_name, d.phone AS driver_phone, d.license_number AS driver_license "
         "FROM shipments s "
         "JOIN hubs h1 ON s.origin_hub=h1.id "
         "JOIN hubs h2 ON s.destination_hub=h2.id "
+        "LEFT JOIN drivers d ON s.driver_id=d.id "
         "WHERE s.id=?", (id,)
     ).fetchone()
     if not shipment:
@@ -368,6 +403,74 @@ def import_csv():
             flash(err, 'warning')
         return redirect(url_for('shipments'))
     return render_template('import.html')
+
+
+# ── Drivers ────────────────────────────────────────────────────────────────
+
+@app.route('/drivers')
+def drivers():
+    conn = db.get_db()
+    all_drivers = conn.execute('SELECT * FROM drivers ORDER BY name').fetchall()
+    # For each driver, find their active (non-delivered) shipment if any
+    active_loads = {}
+    for row in conn.execute(
+        "SELECT s.id, s.driver_id, s.deadline, s.cargo_type, s.status, s.created_at, "
+        "h1.city AS origin_city, h2.city AS dest_city "
+        "FROM shipments s "
+        "JOIN hubs h1 ON s.origin_hub=h1.id "
+        "JOIN hubs h2 ON s.destination_hub=h2.id "
+        "WHERE s.status != 'delivered' AND s.driver_id IS NOT NULL"
+    ):
+        # Keep only the most recent active load per driver
+        if row['driver_id'] not in active_loads:
+            active_loads[row['driver_id']] = row
+    conn.close()
+    return render_template('drivers.html', drivers=all_drivers, active_loads=active_loads)
+
+
+@app.route('/drivers/new', methods=['POST'])
+def new_driver():
+    conn = db.get_db()
+    conn.execute(
+        'INSERT INTO drivers (name, phone, license_number, status) VALUES (?,?,?,?)',
+        (request.form['name'], request.form.get('phone', ''),
+         request.form.get('license_number', ''), request.form.get('status', 'available'))
+    )
+    conn.commit()
+    conn.close()
+    flash(f"Driver {request.form['name']} added.", 'success')
+    return redirect(url_for('drivers'))
+
+
+@app.route('/drivers/<int:id>/edit', methods=['POST'])
+def edit_driver(id):
+    conn = db.get_db()
+    conn.execute(
+        'UPDATE drivers SET name=?, phone=?, license_number=?, status=? WHERE id=?',
+        (request.form['name'], request.form.get('phone', ''),
+         request.form.get('license_number', ''), request.form.get('status', 'available'), id)
+    )
+    conn.commit()
+    conn.close()
+    flash('Driver updated.', 'success')
+    return redirect(url_for('drivers'))
+
+
+@app.route('/drivers/<int:id>/delete', methods=['POST'])
+def delete_driver(id):
+    conn = db.get_db()
+    active = conn.execute(
+        "SELECT COUNT(*) FROM shipments WHERE driver_id=? AND status != 'delivered'", (id,)
+    ).fetchone()[0]
+    if active:
+        flash('Cannot delete — driver has active shipments.', 'danger')
+    else:
+        conn.execute('UPDATE shipments SET driver_id=NULL WHERE driver_id=?', (id,))
+        conn.execute('DELETE FROM drivers WHERE id=?', (id,))
+        conn.commit()
+        flash('Driver deleted.', 'warning')
+    conn.close()
+    return redirect(url_for('drivers'))
 
 
 # ── API ────────────────────────────────────────────────────────────────────

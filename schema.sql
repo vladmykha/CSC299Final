@@ -16,6 +16,15 @@ CREATE TABLE IF NOT EXISTS hub_routes (
     UNIQUE(hub_from, hub_to)
 );
 
+CREATE TABLE IF NOT EXISTS drivers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    phone TEXT DEFAULT '',
+    license_number TEXT DEFAULT '',
+    status TEXT DEFAULT 'available' CHECK(status IN ('available', 'on-route', 'off-duty')),
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS shipments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     origin_hub INTEGER NOT NULL,
@@ -27,6 +36,7 @@ CREATE TABLE IF NOT EXISTS shipments (
     total_pay REAL NOT NULL,
     created_at TEXT DEFAULT (datetime('now')),
     notes TEXT DEFAULT '',
+    driver_id INTEGER REFERENCES drivers(id),
     FOREIGN KEY (origin_hub) REFERENCES hubs(id),
     FOREIGN KEY (destination_hub) REFERENCES hubs(id)
 );

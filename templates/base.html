@@ -31,6 +31,12 @@
         </a>
       </li>
       <li class="nav-item">
+        <a href="{{ url_for('drivers') }}"
+           class="nav-link {{ 'active' if request.endpoint in ('drivers',) }}">
+          <i class="bi bi-person-badge"></i> Drivers
+        </a>
+      </li>
+      <li class="nav-item">
         <a href="{{ url_for('hubs') }}"
            class="nav-link {{ 'active' if request.endpoint == 'hubs' }}">
           <i class="bi bi-diagram-3"></i> Hubs &amp; Routes

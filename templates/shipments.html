@@ -13,7 +13,8 @@
   <div class="card-body py-2 d-flex flex-wrap align-items-center gap-2">
     <form class="d-flex gap-2 me-auto" method="get">
       <input type="hidden" name="status" value="{{ status_filter }}" />
-      <input type="search" name="q" class="form-control form-control-sm" placeholder="Search city or cargo…" value="{{ search }}" style="min-width:200px;" />
+      <input type="search" name="q" class="form-control form-control-sm"
+             placeholder="Search city or cargo…" value="{{ search }}" style="min-width:200px;" />
       <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
       {% if search %}<a href="{{ url_for('shipments', status=status_filter) }}" class="btn btn-sm btn-link text-muted">Clear</a>{% endif %}
     </form>
@@ -41,23 +42,43 @@
             <th>Origin</th>
             <th>Destination</th>
             <th>Cargo</th>
-            <th>Weight (lbs)</th>
+            <th>Driver</th>
             <th>Total Pay</th>
-            <th>Deadline</th>
+            <th>Deadline / Progress</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for s in shipments %}
-          <tr>
+          {% set prog = shipment_progress(s) %}
+          <tr class="{{ 'table-danger' if prog.overdue and s['status'] != 'delivered' }}">
             <td class="text-muted">#{{ s.id }}</td>
             <td>{{ s.origin_city }} <span class="text-muted small">({{ s.origin_code }})</span></td>
             <td>{{ s.dest_city }} <span class="text-muted small">({{ s.dest_code }})</span></td>
             <td>{{ s.cargo_type }}</td>
-            <td>{{ "%.0f"|format(s.weight_lbs) }}</td>
+            <td>
+              {% if s.driver_name %}
+              <span class="d-flex align-items-center gap-1">
+                <i class="bi bi-person-circle text-secondary"></i>
+                <span class="small">{{ s.driver_name }}</span>
+              </span>
+              {% else %}
+              <span class="text-muted small">Unassigned</span>
+              {% endif %}
+            </td>
             <td class="fw-semibold">${{ "%.2f"|format(s.total_pay) }}</td>
-            <td>{{ s.deadline }}</td>
+            <td style="min-width:140px;">
+              <div class="small text-muted mb-1">{{ s.deadline }}</div>
+              {% if s['status'] != 'delivered' %}
+              <div class="progress mb-1" style="height:6px;" title="{{ prog.pct }}% of deadline window elapsed">
+                <div class="progress-bar bg-{{ prog.color }}" style="width:{{ prog.pct }}%;"></div>
+              </div>
+              <div class="small fw-semibold text-{{ prog.color }}">{{ prog.label }}</div>
+              {% else %}
+              <div class="small text-success"><i class="bi bi-check-circle-fill me-1"></i>Completed</div>
+              {% endif %}
+            </td>
             <td>
               <span class="badge status-badge status-{{ s['status'].replace('-','') }}">{{ s['status'] }}</span>
             </td>
